@@ -1,5 +1,5 @@
 
-from ... import hoster
+from ... import hoster, javascript
 from ...plugintools import between
 import json
 
@@ -10,7 +10,7 @@ class this:
     patterns = [
         hoster.Matcher('https?', '*.ted.com', "!/talks/<name>.html").set_tag("direct"),
     ]
-    search = dict(display='thumbs', tags='video')
+    search = dict(display='thumbs', tags='video', empty=True)
 
 def on_check(file):
     resp = file.account.get(file.url, headers={"Accept-Language": "en"})
@@ -61,3 +61,16 @@ def on_search(ctx, query):
         ctx.next = None
     else:
         ctx.next = int(next[0]["href"].rsplit("page=", 1)[1].split("&")[0])
+        
+def on_search_empty(ctx):
+    resp = ctx.account.get("http://www.ted.com/")
+    data = between(resp.text, "/*<sl:translate_json>*/", "/*</sl:translate_json>*/")
+    talks = javascript.execute(data + "JSON.stringify(gridAppJson)")
+    for talk in json.loads(talks).get("talksArray", []):
+        ctx.add_result(
+            title=talk["tTitle"],
+            thumb=talk["image"]+u"_240x180.jpg",
+            duration=talk["talkDuration"],
+            url="http://www.ted.com"+talk["talkLink"],
+            description="Speaker: {}, Date: {}".format(talk["speaker"].strip(), talk["talkDate"])
+        )

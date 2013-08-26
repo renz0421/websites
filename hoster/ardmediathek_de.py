@@ -8,6 +8,7 @@ except ImportError:
     
 from collections import defaultdict
 from datetime import datetime
+import dateutil.parser
 
 from ... import hoster, download
 
@@ -20,7 +21,7 @@ class this:
         hoster.Matcher('https?', '*.ardmediathek.de', "!/<sender>/<sendung>/<title>", documentId="id"),
         hoster.Matcher('https?', 'mediathek.daserste.de', "!/<cat>/<dc>_<sendung>/<id>_<title>").set_tag("daserste"),
     ]
-    search = dict(display='thumbs', tags='video, audio')
+    search = dict(display='thumbs', tags='video, audio', empty=True)
     config = [
         hoster.cfg("best_only", True, bool, description="Add only best quality"),
         hoster.cfg("low", False, bool, description="Add low quality"),
@@ -155,3 +156,16 @@ def on_search(ctx, query):
         ctx.next = None
     else:
         ctx.next = int(current) + 1
+        
+def on_search_empty(ctx):
+    resp0 = ctx.account.get("http://www.ardmediathek.de/")
+    smard = hoster.between(resp0.text, 'aSMARD_Config["Mediathek"] = "', '";')
+    resp = ctx.account.get(u"http://www.ardmediathek.de" + smard)
+    for clip in resp.soup("clip"):
+        ctx.add_result(
+            title=clip.find("name").text,
+            description = dateutil.parser.parse(clip.find("airdate").text).strftime("Ausgestrahlt am: %d.%m.%y %H:%M"),
+            thumb=clip.find("image")["url"],
+            url=clip.find("link")["url"],
+            duration=clip.find("length").text
+        )

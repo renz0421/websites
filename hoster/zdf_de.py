@@ -11,7 +11,7 @@ class this:
     patterns = [
         hoster.Matcher('https?', '*.zdf.de', "!/ZDFmediathek/beitrag/video/<id>/<name>")
     ]
-    search = dict(display='thumbs', tags='video, audio')
+    search = dict(display='thumbs', tags='video, audio', empty=True)
     config = [
         hoster.cfg("best_only", True, bool, description="Only use best quality")
     ]
@@ -46,13 +46,32 @@ def on_check(file):
 
 def on_search(ctx, query):
     resp = ctx.account.get('http://www.zdf.de/ZDFmediathek/suche', params=dict(sucheText=query, flash="off", offset=ctx.position))
+    add_results(ctx, resp)
+    next = resp.soup.find("a", attrs={"class": "forward"})
+    if not next:
+        ctx.next = None
+    ctx.next = int(dict(
+        urlparse.parse_qsl(
+            urlparse.urlsplit(next["href"]).query
+        ))["offset"])
+    if ctx.next == ctx.position:
+        ctx.next = None
+    
+def add_results(ctx, resp):
     for item in resp.soup("li"):
         thumbnail = item.find("img")
         if not thumbnail:
             continue
         else:
             thumbnail = thumbnail["src"]
+            if not thumbnail.startswith("http"):
+                thumbnail = "http://zdf.de" + thumbnail
         a = item("a")
+        try:
+            if a[0]["class"] == "orangeUpper":
+                continue
+        except KeyError:
+            pass
         name = a[1].text.strip()
         desc = a[2].text.strip()
         t = a[3].text.strip()
@@ -67,13 +86,7 @@ def on_search(ctx, query):
             url="http://www.zdf.de" + a[0]["href"].split("?", 1)[0],
             thumb=thumbnail,
             duration=duration)
-    next = resp.soup.find("a", attrs={"class": "forward"})
-    if not next:
-        ctx.next = None
-    ctx.next = int(dict(
-        urlparse.parse_qsl(
-            urlparse.urlsplit(next["href"]).query
-        ))["offset"])
-    if ctx.next == ctx.position:
-        ctx.next = None
     
+def on_search_empty(ctx):
+    resp = ctx.account.get('http://www.zdf.de/ZDFmediathek/hauptnavigation/startseite?flash=off')
+    add_results(ctx, resp)
