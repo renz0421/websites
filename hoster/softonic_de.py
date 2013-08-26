@@ -25,7 +25,7 @@ class this:
         hoster.Matcher('https?', '~^(?!www)(?P<name>.*?).softonic.de$'),
     ]
     url_template = 'http://{name}.softonic.de/download'
-    search = dict(display='thumbs', tags=['other', 'software'])
+    #search = dict(display='thumbs', tags=['other', 'software'])
 
 def on_check_http(file, resp):
     h = resp.soup.find(id='program_title')

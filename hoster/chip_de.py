@@ -15,8 +15,9 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-import os
+import os, re
 import urlparse
+from itertools import izip
 from ... import hoster
 from ...plugintools import Url, between
 
@@ -27,7 +28,7 @@ class this:
     patterns = [
         hoster.Matcher('https?', '*.chip.de', '!/downloads/<title>_<id>.html'),
     ]
-    search = dict(display='thumbs', tags=['other', 'software'])
+    search = dict(display='thumbs', tags=['other', 'software'], empty=True)
     max_chunks = 1
     
 def getlink(ctx):
@@ -79,3 +80,16 @@ def on_search(ctx, query):
         ctx.next = None
     else:
         ctx.next = int(between(next["href"], "No=", "&"))
+
+def on_search_empty(ctx):
+    resp0 = ctx.account.get("http://www.chip.de/")
+    toplink = resp0.soup.find("a", title="Download-Charts: Top 100 der Woche")
+    resp = ctx.account.get(toplink["href"])
+    linkre = re.compile(r"^http\:\/\/www\.chip\.de\/downloads\/.*")
+    imgre = re.compile(r"^http\:\/\/www\.chip\.de\/ii/")
+    images = resp.soup("img", src=imgre)
+    links = resp.soup("a", href=linkre)
+    for image, link in izip(images[:50], links[:50]):
+        ctx.add_result(title=link["title"],
+            url=link["href"],
+            thumb=image["src"])

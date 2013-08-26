@@ -37,7 +37,7 @@ class this:
             cfg('1080p', True, bool),
             cfg('3072p', True, bool)]]
     
-    search = dict(display='thumbs', tags='video, audio')
+    search = dict(display='thumbs', tags='video, audio', default_phrase="movies")
     favicon_url = "http://s.ytimg.com/yts/img/favicon_32-vflWoMFGx.png"
 
 formats = {

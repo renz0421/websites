@@ -13,7 +13,7 @@ class this:
         #hoster.Matcher('https', 'videos-secure.arte.tv', "!/<lang>/videos/<title>--<id>.html").set_tag("videos-secure"),
         hoster.Matcher('http', 'liveweb.arte.tv', "!/<lang>/video/<title>/").set_tag("liveweb"),
     ]
-    search = dict(display='thumbs', tags='video')
+    search = dict(display='thumbs', tags='video', default_phrase='Dokumentation')
     config = [
         hoster.cfg("best_only", True, bool, description="Add only best quality"),
         hoster.cfg("sd", False, bool, description="Add SD quality"),

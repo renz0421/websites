@@ -25,7 +25,7 @@ class this:
     patterns = [
         hoster.Matcher('https?', '*.legittorrents.info', "!/index.php", page=("page", "=torrent-details"), id="id"),
     ]
-    search = dict(display='thumbs', tags=['other'])
+    search = dict(display='thumbs', tags=['other'], empty=True)
     max_chunks = 1
 
 def on_check_http(file, resp):
@@ -59,7 +59,6 @@ def on_search(ctx, query):
             title = a.text,
             url = "http://www.legittorrents.info/" + a["href"],
             thumb = x.find("img").get("src", ""),
-            description = " ",
         )
     
     next = resp.soup.find("select", class_="drop_pager")
@@ -71,3 +70,17 @@ def on_search(ctx, query):
         ctx.next = None
     else:
         ctx.next = selected + 1
+        
+def on_search_empty(ctx):
+    resp = ctx.account.get("http://www.legittorrents.info/")
+    content = resp.soup.find_all("table", class_="lista")[2].find_all("tr")
+    for x in content[1:]:
+        try:
+            a = x.find_all("a")[1]
+        except IndexError:
+            continue
+        ctx.add_result(
+            title = a.text,
+            url = "http://www.legittorrents.info/" + a["href"],
+            thumb = x("img")[1].get("src", ""),
+        )

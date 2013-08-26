@@ -43,7 +43,6 @@ def on_download(chunk):
     else:
         chunk.no_download_link()
         
-# http://www.ted.com/search?cat=ss_talks&q=hunger&page=2
 def on_search(ctx, query):
     resp = ctx.account.get('http://www.ted.com/search', params=dict(q=query, cat="ss_talks", page=ctx.position or 1))
     print "got response", resp.ok, resp.status_code
