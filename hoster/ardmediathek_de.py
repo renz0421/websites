@@ -162,10 +162,13 @@ def on_search_empty(ctx):
     smard = hoster.between(resp0.text, 'aSMARD_Config["Mediathek"] = "', '";')
     resp = ctx.account.get(u"http://www.ardmediathek.de" + smard)
     for clip in resp.soup("clip"):
-        ctx.add_result(
-            title=clip.find("name").text,
-            description = dateutil.parser.parse(clip.find("airdate").text).strftime("Ausgestrahlt am: %d.%m.%y %H:%M"),
-            thumb=clip.find("image")["url"],
-            url=clip.find("link")["url"],
-            duration=clip.find("length").text
-        )
+        try:
+            ctx.add_result(
+                title=clip.find("name").text,
+                description = dateutil.parser.parse(clip.find("airdate").text).strftime("Ausgestrahlt am: %d.%m.%y %H:%M"),
+                thumb=clip.find("image")["url"],
+                url=clip.find("link")["url"],
+                duration=clip.find("length").text
+            )
+        except (AttributeError, KeyError):
+            continue

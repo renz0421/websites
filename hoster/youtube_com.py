@@ -37,7 +37,7 @@ class this:
             cfg('1080p', True, bool),
             cfg('3072p', True, bool)]]
     
-    search = dict(display='thumbs', tags='video, audio', default_phrase="movies")
+    search = dict(display='thumbs', tags='video, audio', default_phrase="vevo")
     favicon_url = "http://s.ytimg.com/yts/img/favicon_32-vflWoMFGx.png"
 
 formats = {
@@ -142,6 +142,9 @@ def check_playlist(file):
 def check_video(file):
     return _check_video(file, file.url)
 
+def _add_mp3(file):
+    core.add_links(['ytinmp3://www.youtube.com/watch?v={}'.format(file.pmatch.id)])
+
 def _check_video(file, url, itag=None):
     resp = file.account.get(url)
     if resp.status_code == 404:
@@ -151,22 +154,25 @@ def _check_video(file, url, itag=None):
         if script.text.startswith("var ytplayer = ytplayer"):
             break
     else:
+        _add_mp3(file)
         if 'This video has been age-restricted based on our' in resp.text:
             file.fatal('age verification needed. only available with an account')
         else:
             file.plugin_out_of_date(msg='error getting youtube script')
 
     js = json.loads(javascript.execute(script.text.encode(resp.soup.original_encoding) + '; JSON.stringify(ytplayer.config);'))
-
-    name = js['args']['title']
-    streams = [x.split('&') for x in js['args']['url_encoded_fmt_stream_map'].split(',')]
-    streams = [dict((y.split('=', 1)) for y in x) for x in streams]
-    streams = [(int(x['itag']), "%s&signature=%s" % (unquote(x['url']), x['sig'])) for x in streams]
-
+    try:
+        name = js['args']['title']
+        streams = [x.split('&') for x in js['args']['url_encoded_fmt_stream_map'].split(',')]
+        streams = [dict((y.split('=', 1)) for y in x) for x in streams]
+        streams = [(int(x['itag']), "%s&signature=%s" % (unquote(x['url']), x['sig'])) for x in streams]
+    except KeyError:
+        streams = []
     if itag is not None:
         for stream in streams:
             if stream[0] == itag:
                 return stream[1]
+        _add_mp3(file)
         file.no_download_link()
 
     links = list()
