@@ -54,9 +54,14 @@ def on_check_http(file, resp):
             file.retry("FSK Protected. Waiting till 10 pm German time.", delta.seconds)
         file.no_download_link()
     try:
-        name = name.split("-Clip ", 1)[1]
+        name = name.split(u"-Clip ", 1)[1]
     except IndexError:
         pass
+    try:
+        name = hoster.between(name, u'"', u'"')
+    except ValueError:
+        pass
+        
     videos = defaultdict(list)
     for q, i, rtmp, path, t in data:
         fname, ext = os.path.splitext(path)
@@ -83,7 +88,6 @@ def on_check_http(file, resp):
         
     print "all", videos
     if not videos:
-        #file.set_infos(name=name)
         file.no_download_link()
         return
     check = list()
@@ -103,13 +107,14 @@ def on_check_http(file, resp):
             checked[link["name"]] = link
         else:
             rtmp.append(link)
-            
-    for link in rtmp:
-        if not link["name"] in checked:
-            checked[link["name"]] = link
+    if not checked:
+        for link in rtmp:
+            if not link["name"] in checked:
+                checked[link["name"]] = link
     if not checked:
         file.no_download_url()
     print "adding:", checked.values()
+    file.delete_after_greenlet()
     return checked.values()
 
 def on_search(ctx, query):
