@@ -59,7 +59,7 @@ def iteminfo(file, s, resp, code):
 def fallback(file):
     #debugtools.add_links("ytinmp3://www.youtube.com/watch?v=" + file.pmatch.id, auto_accept=True)
     #file.delete_after_greenlet()
-    file.no_download_link(msg='video too long or copyright problems')
+    file.retry('video too long or copyright problems')
  
 def on_check(file):
     resp = file.account.get('https://www.youtube.com/watch?v=' + file.pmatch.id)
@@ -77,7 +77,7 @@ def on_download(chunk):
         fallback(file)
     code = resp.content.strip()
     if not code or "LIMIT" in code:
-        fallback(file)
+        file.retry("Limit reached", 60)
     info = iteminfo(file, s, resp, code)
     tx = 0
     try:
