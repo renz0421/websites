@@ -93,7 +93,7 @@ def on_search(ctx, query):
     for r in items:
         url = 'http://www.youtube.com/watch?v={}'.format(r['id'])
         if "video" not in ctx.tags:
-            url = 'ytinmp3://www.youtube.com/watch?v={}'.format(r['id'])
+            url = 'ytmp3org://www.youtube.com/watch?v={}'.format(r['id'])
         ctx.add_result(title=r['title'], thumb=r['thumbnail']['sqDefault'].replace('http://', 'https://'), duration=r['duration'], url=url, extra="audio" in ctx.tags, description=r['description'])
     ctx.next = ctx.position + len(ctx.results)
 
@@ -143,7 +143,7 @@ def check_video(file):
     return _check_video(file, file.url)
 
 def _add_mp3(file):
-    core.add_links(['ytinmp3://www.youtube.com/watch?v={}'.format(file.pmatch.id)])
+    core.add_links(['ytmp3org://www.youtube.com/watch?v={}'.format(file.pmatch.id)])
 
 def _check_video(file, url, itag=None):
     resp = file.account.get(url)
@@ -192,7 +192,7 @@ def _check_video(file, url, itag=None):
 
         links.append(link)
     if file.extra or this.config.formats["mp3"]:
-        link = dict(url='ytinmp3://www.youtube.com/watch?v={}'.format(file.pmatch.id), name=u'{}.mp3'.format(name))
+        link = dict(url='ytmp3org://www.youtube.com/watch?v={}'.format(file.pmatch.id), name=u'{}.mp3'.format(name))
         links.append(link)
         all_links.append(link)
     if not links:
