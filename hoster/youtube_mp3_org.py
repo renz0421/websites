@@ -66,7 +66,8 @@ def on_check(file):
     try:
         title = resp.soup.find('meta', property='og:title')['content']
     except TypeError:
-        title = "youtube - " + file.pmatch.id
+        file.no_download_link()
+        #title = "youtube - " + file.pmatch.id
     file.set_infos(name=title + '.mp3')
 
 def on_download(chunk):
@@ -87,8 +88,8 @@ def on_download(chunk):
                     chunk.waiting = tx
             gevent.sleep(3)
             info = iteminfo(file, s, resp, code)
-            if info['title'] and file.name == "youtube - " + file.pmatch.id:
-                file.set_infos(name=info['title'])
+            #if info['title'] and file.name == "youtube - " + file.pmatch.id:
+            #    file.set_infos(name=info['title'])
     finally:
         with hoster.transaction:
             chunk.waiting = None
