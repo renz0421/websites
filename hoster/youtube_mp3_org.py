@@ -62,13 +62,15 @@ def fallback(file):
     file.retry('video too long or copyright problems')
  
 def on_check(file):
-    resp = file.account.get('https://www.youtube.com/watch?v=' + file.pmatch.id)
+    resp = file.account.get('http://www.youtube.com/watch?v=' + file.pmatch.id)
     try:
         title = resp.soup.find('meta', property='og:title')['content']
     except TypeError:
-        file.no_download_link()
-        #title = "youtube - " + file.pmatch.id
-    file.set_infos(name=title + '.mp3')
+        pass
+        #file.no_download_link()
+        file.set_infos(name="youtube - " + file.pmatch.id)
+    else:
+        file.set_infos(name=title + '.mp3')
 
 def on_download(chunk):
     file = chunk.file
