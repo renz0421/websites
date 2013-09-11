@@ -59,7 +59,7 @@ def iteminfo(file, s, resp, code):
 def fallback(file):
     #debugtools.add_links("ytinmp3://www.youtube.com/watch?v=" + file.pmatch.id, auto_accept=True)
     #file.delete_after_greenlet()
-    file.retry('video too long or copyright problems')
+    file.retry('video too long or copyright problems', 1800)
  
 def on_check(file):
     resp = file.account.get('http://www.youtube.com/watch?v=' + file.pmatch.id)
