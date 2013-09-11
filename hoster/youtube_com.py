@@ -20,7 +20,7 @@ class this:
         hoster.Matcher('https?', '*.youtube.com', '/videoplayback', itag='itag').set_tag('download'),
     ]
     config = [
-        cfg('parse_playlists', True, bool, description="Ask me, if I want to parse a playlist.", enum={1: "Ask", 0: "Don't"}),
+        cfg('parse_playlists', True, bool, description="Ask me, if I want to parse a playlist."),
         ['formats',
             cfg('flv', True, bool),
             cfg('3gp', True, bool),
