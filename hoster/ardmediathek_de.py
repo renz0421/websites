@@ -32,7 +32,7 @@ class this:
     
 def normalize_url(url, pmatch):
     if pmatch.tag == "daserste":
-        return "http://www.ardmediathek.de/das-erste/{}/{}?documentId={}".format(pmatch.sendung, pmatch.titel, pmatch.id)
+        return "http://www.ardmediathek.de/das-erste/{}/{}?documentId={}".format(pmatch.sendung, pmatch.get('titel', ''), pmatch.id)
     else:
         return url
 
