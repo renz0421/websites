@@ -1,8 +1,7 @@
 # encoding: utf-8
 """
-serienjunkies_org.py
+youtube_org.py
 """
-import re
 import json
 from urlparse import unquote
 from ... import hoster, javascript, core
@@ -118,26 +117,55 @@ def check_direct(file, retry=False):
 
     file.set_infos(size=int(resp.headers['Content-Length']))
 
+def parse_playlist_page(file, playlist_id):
+    resp = file.account.get("http://www.youtube.com/playlist", params=dict(list=playlist_id))
+    resp.raise_for_status()
+    yield resp
+    for item in resp.soup.select("li.playlist-video-item"):
+        try:
+            description = item.select("p.video-description")[0].text.strip()
+            #thumb = item.find("link")["href"]
+            link = item.find_all("a", class_="yt-uix-sessionlink")[1]
+            ytid = hoster.between(link["href"], "v=", "&")
+            title = link.text.strip()
+            if title == u"[Deleted Video]":
+                continue
+            dur = item.find("span", class_="video-time").text.strip()
+            count = item.find("span", class_="video-view-count").text.strip().split()[0]
+            yield dict(title=title,
+                       url="http://youtube.com/watch?v=" + ytid,
+                       #thumb=thumb,
+                       description=description,
+                       duration=u"{} ({} views)".format(dur, count),
+                       )
+        except:
+            continue
+
 def check_playlist(file):
-    resp = file.account.get(file.url)
-    if resp.status_code == 404:
-        file.set_offline()
-    playlist = resp.soup.find("h3", class_="video-title-container")
-    if playlist:
-        playlist = playlist.find("a")
-    if playlist:
-        parse_playlists = file.input_remember_boolean_config(this.config, 'parse_playlists',
-            'Found {num} videos in youtube playlist. Do you want to add them?'.format(num=len(playlist)))
-        if parse_playlists:
-            links = list()
-            for a in playlist:
-                name = a.get('title')
-                if name == '[Deleted Video]':
-                    continue
-                id = re.search(r'v=([^&]+)', a.get('href')).group(1)
-                links.append(dict(url='http://www.youtube.com/watch?v='+id, name=name))
-            return links
-    file.no_download_link()
+    data = parse_playlist_page(file, file.pmatch.playlist)
+    if not data:
+        file.no_download_link()
+    resp = next(data)
+    print "EXTRA", repr(file.extra)
+    if file.extra:
+        # add all links, as user requested.
+        return [i["url"] for i in data]
+    data = list(data)
+    with hoster.search.Input("Youtube playlist", "list", "youtube.com") as add:
+        #add.account = file.account
+        playlist_desc = resp.soup.find("div", class_="yt-uix-expander-body")
+        if not playlist_desc:
+            desc = ""
+        else:
+            desc = playlist_desc.text.strip()
+        add(title="Download all {} links".format(len(data)),
+            url=file.url,
+            extra=1,
+            #thumb=data[0]["thumb"],
+            description=desc)
+        for i in data:
+            add(**i)
+    file.delete_after_greenlet()
 
 def check_video(file):
     return _check_video(file, file.url)
