@@ -35,7 +35,8 @@ class this:
             cfg('720p', True, bool),
             cfg('1080p', True, bool),
             cfg('3072p', True, bool)]]
-    
+
+    set_user_agent = True
     search = dict(display='thumbs', tags='video, audio', default_phrase="vevo")
     favicon_url = "http://s.ytimg.com/yts/img/favicon_32-vflWoMFGx.png"
 
@@ -189,6 +190,9 @@ def _check_video(file, url, itag=None):
             file.plugin_out_of_date(msg='error getting youtube script')
 
     js = json.loads(javascript.execute(script.text.encode(resp.soup.original_encoding) + '; JSON.stringify(ytplayer.config);'))
+    print "PLAYER CONFIG", js
+    print resp.soup.find("h1", id="unavailable-message")
+
     try:
         name = js['args']['title']
         streams = [x.split('&') for x in js['args']['url_encoded_fmt_stream_map'].split(',')]
@@ -196,6 +200,13 @@ def _check_video(file, url, itag=None):
         streams = [(int(x['itag']), "%s&signature=%s" % (unquote(x['url']), x['sig'])) for x in streams]
     except KeyError:
         streams = []
+        name = resp.soup.find('meta', property='og:title')
+        if not name:
+            name = u"yt {}".format(file.pmatch.id)
+        else:
+            name = name['content']
+        print "no streams found"
+
     if itag is not None:
         for stream in streams:
             if stream[0] == itag:
@@ -220,7 +231,9 @@ def _check_video(file, url, itag=None):
 
         links.append(link)
     if file.extra or this.config.formats["mp3"]:
-        link = dict(url='ytmp3org://www.youtube.com/watch?v={}'.format(file.pmatch.id), name=u'{}.mp3'.format(name))
+        link = dict(url='ytmp3org://www.youtube.com/watch?v={}'.format(file.pmatch.id))
+        if streams:
+            link["name"] = u'{}.mp3'.format(name)
         links.append(link)
         all_links.append(link)
     if not links:
@@ -231,3 +244,7 @@ def _check_video(file, url, itag=None):
 def on_download(chunk):
     check_direct(chunk.file)
     return chunk.file.url
+
+def on_initialize_account(account):
+    account.headers["Accept-Language"] = "en"
+    account.set_user_agent()

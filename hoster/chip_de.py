@@ -15,7 +15,8 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 """
 
-import os, re
+import os
+import re
 import urlparse
 from itertools import izip
 from ... import hoster
@@ -69,10 +70,10 @@ def on_search(ctx, query):
         except ValueError:
             thumb = ""
         ctx.add_result(
-            title = a["title"],
-            url = d["url"],
-            thumb = thumb,
-            description = x.find("p").text.strip().split("\n")[1],
+            title=a["title"],
+            url=d["url"],
+            thumb=thumb,
+            description=x.find("p").text.strip().split("\n")[1],
         )
     
     next = resp.soup.find("a", class_="page_next")
@@ -90,6 +91,7 @@ def on_search_empty(ctx):
     images = resp.soup("img", src=imgre)
     links = resp.soup("a", href=linkre)
     for image, link in izip(images[:50], links[:50]):
-        ctx.add_result(title=link["title"],
+        ctx.add_result(
+            title=link["title"],
             url=link["href"],
             thumb=image["src"])

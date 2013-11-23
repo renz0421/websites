@@ -23,13 +23,15 @@ def load_icon(hostname):
     return new
 
 def on_check(file):
-    resp = file.account.get("http://www.zdf.de/ZDFmediathek/xmlservice/web/beitragsDetails", 
-        params=dict(ak="web", id=file.pmatch.id))
+    resp = file.account.get(
+        "http://www.zdf.de/ZDFmediathek/xmlservice/web/beitragsDetails",
+        params=dict(ak="web", id=file.pmatch.id)
+    )
     
     videos = resp.soup.find_all("formitaet", attrs=dict(basetype="h264_aac_mp4_http_na_na"))
     if not videos:
         file.no_download_link()
-    title = u"%s - {}p.mp4"%resp.soup.find("title").text
+    title = u"%s - {}p.mp4" % resp.soup.find("title").text
     q = dict()
     for video in videos:
         height = video.find("height").text
@@ -40,7 +42,7 @@ def on_check(file):
                 continue
             q[height] = {"url": url, "name": title.format(height)}
     if this.config.best_only:
-       return [q[max(q)]]
+        return [q[max(q)]]
     else:
         return q.values()
 
@@ -81,7 +83,8 @@ def add_results(ctx, resp):
             duration = t.split(", ")[1]
         except IndexError:
             duration = t
-        ctx.add_result(title=name,
+        ctx.add_result(
+            title=name,
             description=desc,
             url="http://www.zdf.de" + a[0]["href"].split("?", 1)[0],
             thumb=thumbnail,
