@@ -7,6 +7,7 @@ from urlparse import unquote
 from ... import hoster, javascript, core
 from ...hoster import cfg
 
+
 @hoster.host
 class this:
     model = hoster.HttpHoster
@@ -66,6 +67,7 @@ formats = {
     102: ("webm", 1280, 720, 8, True, '720p')
 }
 
+
 def normalize_url(url, pmatch):
     if pmatch.tag == 'download':
         return url
@@ -78,6 +80,7 @@ def normalize_url(url, pmatch):
         return 'http://www.youtube.com/playlist?list='+pmatch.playlist
     else:
         raise RuntimeError('unknown pattern match')
+
 
 def on_search(ctx, query):
     if ctx.position == 0:
@@ -97,6 +100,7 @@ def on_search(ctx, query):
         ctx.add_result(title=r['title'], thumb=r['thumbnail']['sqDefault'].replace('http://', 'https://'), duration=r['duration'], url=url, extra="audio" in ctx.tags, description=r['description'])
     ctx.next = ctx.position + len(ctx.results)
 
+
 def on_check(file):
     if file.pmatch.tag == 'download':
         return check_direct(file)
@@ -104,6 +108,7 @@ def on_check(file):
         return check_playlist(file)
     else:
         return check_video(file)
+
 
 def check_direct(file, retry=False):
     resp = file.account.get(file.url, stream=True)
@@ -117,6 +122,7 @@ def check_direct(file, retry=False):
         file.no_download_link(msg='link expired?')
 
     file.set_infos(size=int(resp.headers['Content-Length']))
+
 
 def parse_playlist_page(file, playlist_id):
     resp = file.account.get("http://www.youtube.com/playlist", params=dict(list=playlist_id))
@@ -142,12 +148,12 @@ def parse_playlist_page(file, playlist_id):
         except:
             continue
 
+
 def check_playlist(file):
     data = parse_playlist_page(file, file.pmatch.playlist)
     if not data:
         file.no_download_link()
     resp = next(data)
-    print "EXTRA", repr(file.extra)
     if file.extra:
         # add all links, as user requested.
         return [i["url"] for i in data]
@@ -168,11 +174,14 @@ def check_playlist(file):
             add(**i)
     file.delete_after_greenlet()
 
+
 def check_video(file):
     return _check_video(file, file.url)
 
+
 def _add_mp3(file):
     core.add_links(['ytmp3org://www.youtube.com/watch?v={}'.format(file.pmatch.id)])
+
 
 def _check_video(file, url, itag=None):
     resp = file.account.get(url)
@@ -216,6 +225,7 @@ def _check_video(file, url, itag=None):
 
     links = list()
     all_links = list()
+    print "streams are:", repr(streams)
     for stream in streams:
         if not stream[0] in formats:
             file.log.warning('format {} not found'.format(stream[0]))
@@ -238,12 +248,13 @@ def _check_video(file, url, itag=None):
         all_links.append(link)
     if not links:
         links = all_links
-    
     return links, name
-    
+
+
 def on_download(chunk):
     check_direct(chunk.file)
     return chunk.file.url
+
 
 def on_initialize_account(account):
     account.headers["Accept-Language"] = "en"
